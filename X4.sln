@@ -3,9 +3,38 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32210.238
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "X4.CatalogFileLib", "src\X4.CatalogFileLib\X4.CatalogFileLib.csproj", "{0F6736DF-4298-46CC-B887-6CDB258B8AC9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{560428D3-58A9-4D01-A6B8-95BFFBFF071F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{EDB48A0C-3A8F-4527-B5D5-BBA25B0E4E1E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sandboxes", "sandboxes", "{FB1E27FB-AE1C-401F-9322-DB92653CCCA9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "X4.Tests.Sandboxes.Console", "tests\sandboxes\X4.Tests.Sandboxes.Console\X4.Tests.Sandboxes.Console.csproj", "{74F3E5E9-B38E-40BD-A9F0-820AF13DF152}"
+EndProject
 Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0F6736DF-4298-46CC-B887-6CDB258B8AC9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0F6736DF-4298-46CC-B887-6CDB258B8AC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0F6736DF-4298-46CC-B887-6CDB258B8AC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0F6736DF-4298-46CC-B887-6CDB258B8AC9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{74F3E5E9-B38E-40BD-A9F0-820AF13DF152}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{74F3E5E9-B38E-40BD-A9F0-820AF13DF152}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{74F3E5E9-B38E-40BD-A9F0-820AF13DF152}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{74F3E5E9-B38E-40BD-A9F0-820AF13DF152}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{0F6736DF-4298-46CC-B887-6CDB258B8AC9} = {560428D3-58A9-4D01-A6B8-95BFFBFF071F}
+		{FB1E27FB-AE1C-401F-9322-DB92653CCCA9} = {EDB48A0C-3A8F-4527-B5D5-BBA25B0E4E1E}
+		{74F3E5E9-B38E-40BD-A9F0-820AF13DF152} = {FB1E27FB-AE1C-401F-9322-DB92653CCCA9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {80077A74-575E-4117-893C-F6C1AF441177}
