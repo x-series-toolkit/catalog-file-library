@@ -1,8 +1,13 @@
-﻿global using System;
+﻿global using Microsoft.Extensions.Logging;
+
+global using System;
 global using System.Collections.Generic;
 global using System.IO;
 global using System.IO.Abstractions;
 global using System.Linq;
+global using System.Runtime.Serialization;
 global using System.Threading.Tasks;
 
 global using X4.CatalogFileLib.Contracts;
+global using X4.CatalogFileLib.Domain;
+global using X4.CatalogFileLib.Exceptions;

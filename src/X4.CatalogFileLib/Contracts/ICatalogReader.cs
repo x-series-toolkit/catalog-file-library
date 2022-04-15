@@ -2,9 +2,9 @@
 
 public interface ICatalogReader
 {
-    IReadOnlyList<string> GetCatalogFiles(string catalogDirectoryPath);
+    //IReadOnlyList<string> GetCatalogFiles(string catalogDirectoryPath);
     
-    Task<IReadOnlyList<CatalogEntry>> GetFilesInCatalogAsync(string path, IProgress<ProgressReport>? progress = null);
+    Task<IReadOnlyList<CatalogEntry>> GetCatalogEntriesAsync(string catalogFilePath, IProgress<ProgressReport>? progress = null);
     
-    IReadOnlyList<CatalogEntry> GetFilesInCatalog(string path, IProgress<ProgressReport>? progress = null);
+    IReadOnlyList<CatalogEntry> GetCatalogEntries(string catalogFilePath, IProgress<ProgressReport>? progress = null);
 }
