@@ -1,4 +1,4 @@
-﻿namespace X4.Tests.Sandboxes.Console;
+﻿namespace X4.Tests.Sandboxes.Benchmarks;
 
 public class ConsoleProgress<T> : IProgress<T>
 {

@@ -2,58 +2,53 @@
 
 public class CatalogEntry
 {
-    public CatalogEntry(string catalogFilePath, string assetRow, long byteOffset)
+    public CatalogEntry(ReadOnlySpan<char> assetLine, long byteOffset)
     {
-        if (assetRow == null)
+        if (assetLine == null || assetLine.IsEmpty)
         {
-            throw new ArgumentNullException(nameof(assetRow));
+            throw new ArgumentException("Value cannot be null or empty.", nameof(assetLine));
         }
 
-        string[] columns = assetRow.Split(' ');
+        int index = assetLine.LastIndexOf(' ') + 1;
 
-        string assetPath;
-        int assetSize;
-        int timeStamp;
-        string md5Hash;
+        Md5Hash = assetLine.Slice(index, assetLine.Length - index).ToString();
 
-        switch (columns.Length)
-        {
-            case 4:
-                assetPath = columns[0];
-                int.TryParse(columns[1], out assetSize);
-                int.TryParse(columns[2], out timeStamp);
-                md5Hash = columns[3];
-                break;
-            //Possible spaces in file path. try to fix
-            case > 4:
-                assetPath = string.Join(" ", columns.Take(columns.Length - 3));
+        assetLine = assetLine.Slice(0, index - 1);
+        index = assetLine.LastIndexOf(' ') + 1;
+#if NETSTANDARD2_0 || NET461
+        int timeStamp = int.Parse(assetLine.Slice(index, assetLine.Length - index).ToString());
+        DateUtc = UnixTimestampToDateTime(timeStamp);
+#else
+        int timeStamp = int.Parse(assetLine.Slice(index, assetLine.Length - index));
+        DateUtc = UnixTimestampToDateTime(timeStamp);
+#endif
+        assetLine = assetLine.Slice(0, index - 1);
+        index = assetLine.LastIndexOf(' ') + 1;
 
-                int.TryParse(columns[columns.Length - 3], out assetSize);
-                int.TryParse(columns[columns.Length - 2], out timeStamp);
-                md5Hash = columns[columns.Length - 1];
-                break;
-            //The row is missing columns. Can't recover
-            default:
-                throw new CorruptedCatalogFileException($"The row is missing columns: {assetRow}");
-        }
+#if NETSTANDARD2_0 || NET461
+        AssetSize = int.Parse(assetLine.Slice(index, assetLine.Length - index).ToString());
+#else
+        AssetSize = int.Parse(assetLine.Slice(index, assetLine.Length - index));
+#endif
+        AssetPath = assetLine.Slice(0, index - 1).ToString();
 
-        CatalogFilePath = catalogFilePath;
-        AssetPath = assetPath;
-        AssetSize = assetSize;
-        TimeStamp = timeStamp;
         ByteOffset = byteOffset;
-        Md5Hash = md5Hash;
     }
 
-    public string CatalogFilePath { get; }
-    
     public string AssetPath { get; }
     
     public int AssetSize { get; }
     
-    public int TimeStamp { get; }
+    public DateTime DateUtc { get; }
     
     public long ByteOffset { get; }
     
     public string Md5Hash { get; }
+
+    private static DateTime UnixTimestampToDateTime(double unixTime)
+    {
+        var unixStart = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+        var unixTimeStampInTicks = (long)(unixTime * TimeSpan.TicksPerSecond);
+        return new DateTime(unixStart.Ticks + unixTimeStampInTicks, DateTimeKind.Utc);
+    }
 }

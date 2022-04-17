@@ -13,12 +13,12 @@ public class CatalogAssetExporter : ICatalogAssetExporter
 
     public void ExportAsset(CatalogEntry catalogEntry, string destFileName)
     {
-        IFileInfo catalogFileInfo = _fs.FileInfo.FromFileName(catalogEntry.CatalogFilePath);
+        IFileInfo catalogFileInfo = _fs.FileInfo.FromFileName("catalogEntry.CatalogFilePath");
 
         if (!catalogFileInfo.Exists)
         {
-            _logger?.LogError("Catalog file does not exist: {CatalogFile}", catalogEntry.CatalogFilePath);
-            throw new CatalogFileNotFoundException("Catalog file does not exist", catalogEntry.CatalogFilePath);
+            _logger?.LogError("Catalog file does not exist: {CatalogFile}", "catalogEntry.CatalogFilePath");
+            throw new CatalogFileNotFoundException("Catalog file does not exist", "catalogEntry.CatalogFilePath");
         }
 
         string catalogFileName = _fs.Path.GetFileNameWithoutExtension(catalogFileInfo.Name);

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFrameworks>net461;netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
+		<ImplicitUsings>disable</ImplicitUsings>
+		<LangVersion>latest</LangVersion>
+		<Nullable>annotations</Nullable>
+		<!-- enable the feature including warnings only on top of the most recent framework you target. -->
+		<!-- it will serve as a reference for warnings for all others. -->
+		<Nullable Condition="'$(TargetFramework)' == 'net6.0'">enable</Nullable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
+		<PackageReference Include="System.Memory" Version="4.5.4" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\..\src\X4.CatalogFileLib\X4.CatalogFileLib.csproj" />
+	</ItemGroup>
+
+</Project>
