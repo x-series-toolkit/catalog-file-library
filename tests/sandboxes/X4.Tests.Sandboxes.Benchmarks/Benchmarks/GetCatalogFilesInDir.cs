@@ -3,41 +3,58 @@
 [MemoryDiagnoser]
 public class GetCatalogFilesInDir
 {
-    private readonly CatalogService _catalogService = new(new CatalogFileReader(), new CatalogAssetExporter());
+    private static readonly CatalogService CatalogService = new(new CatalogFileReader(), new CatalogAssetExporter());
+    private static readonly CatalogServiceWithProgress CatalogServiceWithProgress = new(CatalogService);
     private const string CatalogDirPath = @"E:\SteamLibrary\steamapps\common\X4 Foundations";
 
-
     [Benchmark]
-    public IReadOnlyList<CatalogFile> GetCatalogFilesByDirectory_Benchmark()
+    public IImmutableList<CatalogFile> GetCatalogFilesInDirectory_Benchmark()
     {
-        return _catalogService.GetCatalogFilesByDirectory(CatalogDirPath);
+        return CatalogService.GetCatalogFilesInDirectory(CatalogDirPath);
     }
 
     [Benchmark]
-    public IReadOnlyList<CatalogFile> GetCatalogFilesByDirectoryWithProgress_Benchmark()
+    public IImmutableList<CatalogFile> GetCatalogFilesInDirectoryWithProgress_Benchmark()
     {
-        return _catalogService.GetCatalogFilesByDirectory(CatalogDirPath, progress: new ConsoleProgress<ProgressReport>(report =>
+        return CatalogServiceWithProgress.GetCatalogFilesInDirectory(CatalogDirPath, new ConsoleProgress<ProgressReport>(report =>
         {
             (int completed, int total) = report;
             double percent = Math.Round(completed / (double)total * 100);
-            System.Console.WriteLine($"{percent}%");
+            Console.WriteLine($"{percent}%");
         }));
     }
 
     [Benchmark]
-    public async Task<IReadOnlyList<CatalogFile>> GetCatalogFilesByDirectoryAsync_Benchmark()
+    public IImmutableList<CatalogFile> GetCatalogFilesInDirectoryParallel_Benchmark()
     {
-        return await _catalogService.GetCatalogFilesByDirectoryAsync(CatalogDirPath);
+        return CatalogService.GetCatalogFilesInDirectoryParallel(CatalogDirPath);
     }
 
     [Benchmark]
-    public async Task<IReadOnlyList<CatalogFile>> GetCatalogFilesByDirectoryAsyncWithProgress_Benchmark()
+    public IImmutableList<CatalogFile> GetCatalogFilesInDirectoryParallelWithProgress_Benchmark()
     {
-        return await _catalogService.GetCatalogFilesByDirectoryAsync(CatalogDirPath,default, new ConsoleProgress<ProgressReport>(report =>
+        return CatalogServiceWithProgress.GetCatalogFilesInDirectoryParallel(CatalogDirPath, new ConsoleProgress<ProgressReport>(report =>
         {
             (int completed, int total) = report;
             double percent = Math.Round(completed / (double)total * 100);
-            System.Console.WriteLine($"{percent}%");
+            Console.WriteLine($"{percent}%");
+        }));
+    }
+
+    [Benchmark]
+    public async Task<IImmutableList<CatalogFile>> GetCatalogFilesInDirectoryAsync_Benchmark()
+    {
+        return await CatalogService.GetCatalogFilesInDirectoryAsync(CatalogDirPath);
+    }
+
+    [Benchmark]
+    public async Task<IImmutableList<CatalogFile>> GetCatalogFilesInDirectoryAsyncWithProgress_Benchmark()
+    {
+        return await CatalogServiceWithProgress.GetCatalogFilesInDirectoryAsync(CatalogDirPath, new ConsoleProgress<ProgressReport>(report =>
+        {
+            (int completed, int total) = report;
+            double percent = Math.Round(completed / (double)total * 100);
+            Console.WriteLine($"{percent}%");
         }));
     }
 }

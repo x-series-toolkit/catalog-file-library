@@ -30,18 +30,18 @@ public class CatalogService : ICatalogService
         throw new ArgumentException("Catalog file path not specified.", nameof(catalogFilePath));
     }
 
-    public Task<CatalogFile> GetCatalogFileAsync(string catalogFilePath, CancellationToken ct = default)
+    public IImmutableList<CatalogFile> GetCatalogFiles(params string[] catalogFilePaths)
     {
-        if (!string.IsNullOrEmpty(catalogFilePath))
+        if (catalogFilePaths is not { Length: 0 })
         {
-            return _catalogFileReader.GetCatalogFileAsync(catalogFilePath, ct);
+            return catalogFilePaths.Select(GetCatalogFile).ToImmutableList();
         }
 
-        _logger?.LogError("Catalog file path not specified.");
-        throw new ArgumentException("Catalog file path not specified.", nameof(catalogFilePath));
+        _logger?.LogError("No catalog files specified.");
+        throw new ArgumentException("No catalog files specified.", nameof(catalogFilePaths));
     }
 
-    public Task<IReadOnlyList<CatalogFile>> GetCatalogFilesByDirectoryAsync(string catalogsDirectoryPath, CancellationToken ct = default, IProgress<ProgressReport>? progress = null)
+    public IImmutableList<CatalogFile> GetCatalogFilesInDirectory(string catalogsDirectoryPath)
     {
         if (string.IsNullOrEmpty(catalogsDirectoryPath))
         {
@@ -53,75 +53,15 @@ public class CatalogService : ICatalogService
 
         if (catalogFilePaths.Length == 0)
         {
-            _logger?.LogInformation("No catalog files found in: {Directory}", catalogsDirectoryPath);
-            return Task.FromResult<IReadOnlyList<CatalogFile>>(new List<CatalogFile>());
+            return ImmutableList.Create<CatalogFile>();
         }
 
-        IList<Task<CatalogFile>> tasks = catalogFilePaths.Select(catalogFilePath => GetCatalogFileAsync(catalogFilePath, ct)).ToList();
-
-        if (progress == null)
-        {
-            return Task.WhenAll(tasks).ContinueWith(t =>
-            {
-                if (!t.IsFaulted)
-                {
-                    return (IReadOnlyList<CatalogFile>)t.Result;
-                }
-                _logger?.LogError(t.Exception, "Error while reading catalog files.");
-                throw t.Exception;
-
-            }, ct);
-        }
-
-        return tasks.WhenAllWithProgress(_ =>
-        {
-            int completedTasksCount = _.Count(task => task.IsCompleted);
-            int tasksCount = tasks.Count();
-            progress?.Report(new ProgressReport(completedTasksCount, tasksCount));
-        }).ContinueWith(t =>
-        {
-            if (!t.IsFaulted)
-            {
-                progress.Report(new ProgressReport(tasks.Count, tasks.Count));
-                return t.Result;
-            }
-
-            _logger?.LogError(t.Exception, "Error while reading catalog files.");
-            throw t.Exception;
-        }, ct, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Default);
-    }
-
-    public IReadOnlyList<CatalogFile> GetCatalogFilesInDirectory(string catalogsDirectoryPath, IProgress<ProgressReport>? progress = null)
-    {
-        if (string.IsNullOrEmpty(catalogsDirectoryPath))
-        {
-            _logger?.LogError("Catalog root directory not specified.");
-            throw new ArgumentException("Catalog root directory path is not set.", nameof(catalogsDirectoryPath));
-        }
-
-        string[] catalogFilePaths = _fs.Directory.GetFiles(catalogsDirectoryPath, "*.cat");
-
-        if (catalogFilePaths.Length == 0)
-        {
-            return new List<CatalogFile>();
-        }
-
-        var catalogFiles = new List<CatalogFile>();
-
-        for (var index = 0; index < catalogFilePaths.Length; index++)
-        {
-            string catalogFilePath = catalogFilePaths[index];
-
-            CatalogFile catalogFile = GetCatalogFile(catalogFilePath);
-            catalogFiles.Add(catalogFile);
-
-            progress?.Report(new ProgressReport(index + 1, catalogFilePaths.Length));
-        }
+        var catalogFiles = catalogFilePaths.Select(GetCatalogFile).ToImmutableList();
 
         return catalogFiles;
     }
 
-    public IReadOnlyList<CatalogFile> GetCatalogFilesInDirectoryParallel(string catalogsDirectoryPath, IProgress<ProgressReport>? progress = null)
+    public IImmutableList<CatalogFile> GetCatalogFilesInDirectoryParallel(string catalogsDirectoryPath)
     {
         if (string.IsNullOrEmpty(catalogsDirectoryPath))
         {
@@ -133,31 +73,21 @@ public class CatalogService : ICatalogService
 
         if (catalogFilePaths.Length == 0)
         {
-            return new List<CatalogFile>();
+            return ImmutableList.Create<CatalogFile>();
         }
 
         var catalogFiles = new ConcurrentBag<CatalogFile>();
-        var currentProgress = 0;
-        Parallel.For(0, catalogFilePaths.Length, i =>
-        {
-            string catalogFilePath = catalogFilePaths[i];
 
+        Parallel.ForEach(catalogFilePaths, catalogFilePath =>
+        {
             CatalogFile catalogFile = GetCatalogFile(catalogFilePath);
             catalogFiles.Add(catalogFile);
-
-            if (progress == null)
-            {
-                return;
-            }
-
-            int totalProgress = Interlocked.Increment(ref currentProgress);
-            progress.Report(new ProgressReport(totalProgress, catalogFilePaths.Length));
         });
 
-        return new List<CatalogFile>(catalogFiles).OrderBy(catalogFile => catalogFile.FilePath).ToList();
+        return catalogFiles.OrderBy(catalogFile => catalogFile.FilePath).ToImmutableList();
     }
-    
-    public IReadOnlyList<CatalogFile> GetCatalogFilesInMultipleDirectory(params string[] catalogDirectoryPaths)
+
+    public IImmutableList<CatalogFile> GetCatalogFilesInMultipleDirectory(params string[] catalogDirectoryPaths)
     {
         if (catalogDirectoryPaths is { Length: 0 })
         {
@@ -172,6 +102,114 @@ public class CatalogService : ICatalogService
             catalogFiles.AddRange(GetCatalogFilesInDirectory(catalogDirectoryPath));
         }
 
-        return catalogFiles;
+        return catalogFiles.ToImmutableList();
+    }
+
+    public IImmutableList<CatalogFile> GetCatalogFilesInMultipleDirectoryParallel(params string[] catalogDirectoryPaths)
+    {
+        if (catalogDirectoryPaths is { Length: 0 })
+        {
+            _logger?.LogError("No catalog directories specified.");
+            throw new ArgumentException("No catalog directories specified.", nameof(catalogDirectoryPaths));
+        }
+
+        var catalogFiles = new List<CatalogFile>();
+
+        Parallel.ForEach(catalogDirectoryPaths, catalogDirectoryPath =>
+        {
+            catalogFiles.AddRange(GetCatalogFilesInDirectory(catalogDirectoryPath));
+        });
+
+        return catalogFiles.ToImmutableList();
+    }
+
+    public Task<CatalogFile> GetCatalogFileAsync(string catalogFilePath, CancellationToken ct = default)
+    {
+        if (!string.IsNullOrEmpty(catalogFilePath))
+        {
+            return _catalogFileReader.GetCatalogFileAsync(catalogFilePath, ct);
+        }
+
+        _logger?.LogError("Catalog file path not specified.");
+        throw new ArgumentException("Catalog file path not specified.", nameof(catalogFilePath));
+    }
+
+    public Task<IImmutableList<CatalogFile>> GetCatalogFilesAsync(CancellationToken ct = default, params string[] catalogFilePaths)
+    {
+        if (catalogFilePaths is { Length: 0 })
+        {
+            _logger?.LogError("No catalog files specified.");
+            throw new ArgumentException("No catalog files specified.", nameof(catalogFilePaths));
+        }
+
+        var tasks = catalogFilePaths.Select(s => GetCatalogFileAsync(s, ct));
+
+        return Task.WhenAll(tasks).ContinueWith(t =>
+        {
+            if (!t.IsFaulted)
+            {
+                return (IImmutableList<CatalogFile>)t.Result.ToImmutableList();
+            }
+
+            _logger?.LogError(t.Exception, "Error while reading catalog files.");
+            throw t.Exception ?? new Exception("Error while reading catalog files.");
+
+        }, ct);
+    }
+
+    public Task<IImmutableList<CatalogFile>> GetCatalogFilesInDirectoryAsync(string catalogsDirectoryPath, CancellationToken ct = default)
+    {
+        if (string.IsNullOrEmpty(catalogsDirectoryPath))
+        {
+            _logger?.LogError("Catalog root directory not specified.");
+            throw new ArgumentException("Catalog root directory path is not set.", nameof(catalogsDirectoryPath));
+        }
+
+        string[] catalogFilePaths = _fs.Directory.GetFiles(catalogsDirectoryPath, "*.cat");
+
+        if (catalogFilePaths.Length == 0)
+        {
+            _logger?.LogInformation("No catalog files found in: {Directory}", catalogsDirectoryPath);
+            return Task.FromResult<IImmutableList<CatalogFile>>(new List<CatalogFile>().ToImmutableList());
+        }
+
+        IList<Task<CatalogFile>> tasks = catalogFilePaths.Select(catalogFilePath => GetCatalogFileAsync(catalogFilePath, ct)).ToList();
+
+        return Task.WhenAll(tasks).ContinueWith(t =>
+        {
+            if (!t.IsFaulted)
+            {
+                return (IImmutableList<CatalogFile>)t.Result.ToImmutableList();
+            }
+            _logger?.LogError(t.Exception, "Error while reading catalog files.");
+            throw t.Exception ?? new Exception("Error while reading catalog files.");
+
+        }, ct);
+    }
+
+    public async Task<IImmutableList<CatalogFile>> GetCatalogFilesInMultipleDirectoryAsync(CancellationToken ct = default, params string[] catalogDirectoryPaths)
+    {
+        if (catalogDirectoryPaths is { Length: 0 })
+        {
+            _logger?.LogError("No catalog directories specified.");
+            throw new ArgumentException("No catalog directories specified.", nameof(catalogDirectoryPaths));
+        }
+
+        var tasks = catalogDirectoryPaths
+            .Select(catalogDirectoryPath => GetCatalogFilesInDirectoryAsync(catalogDirectoryPath, ct))
+            .ToList();
+
+        var files = (await Task.WhenAll(tasks).ContinueWith(t =>
+        {
+            if (!t.IsFaulted)
+            {
+                return t.Result;
+            }
+            _logger?.LogError(t.Exception, "Error while reading catalog files.");
+            throw t.Exception ?? new Exception("Error while reading catalog files.");
+
+        }, ct)).SelectMany(list => list).ToList();
+
+        return files.ToImmutableList();
     }
 }

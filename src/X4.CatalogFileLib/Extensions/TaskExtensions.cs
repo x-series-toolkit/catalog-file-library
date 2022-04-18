@@ -15,7 +15,7 @@ internal static class TaskExtensions
     }
 #endif
     
-    public static async Task<IReadOnlyList<TModel>> WhenAllWithProgress<TModel>(this ICollection<Task<TModel>> tasks, Action<ICollection<Task<TModel>>> reportProgressAction)
+    public static async Task<IEnumerable<TModel>> WhenAllWithProgress<TModel>(this ICollection<Task<TModel>> tasks, Action<ICollection<Task<TModel>>> reportProgressAction)
     {
         // get Task which completes when all 'tasks' have completed
         var whenAllTask = Task.WhenAll(tasks);
