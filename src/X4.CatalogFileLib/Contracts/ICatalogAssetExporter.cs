@@ -2,5 +2,7 @@
 
 public interface ICatalogAssetExporter
 {
-    void ExportAsset(CatalogEntry catalogEntry, string destFileName);
+    void ExportAsset(string sourceFile, CatalogEntry catalogEntry, string destDirectory, string? destFileName = null);
+    
+    Task ExportAssetAsync(string sourceFile, CatalogEntry catalogEntry, string destDirectory, string? destFileName = null, CancellationToken ct = default);
 }

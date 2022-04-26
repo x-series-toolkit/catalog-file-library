@@ -6,6 +6,7 @@ global using System.Collections.Generic;
 global using System.Collections.Immutable;
 global using System.IO;
 global using System.IO.Abstractions;
+global using System.IO.Pipelines;
 global using System.Linq;
 global using System.Runtime.Serialization;
 global using System.Threading;
