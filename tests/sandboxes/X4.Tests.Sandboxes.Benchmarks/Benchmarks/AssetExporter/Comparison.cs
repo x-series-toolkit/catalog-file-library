@@ -3,8 +3,8 @@
 [MemoryDiagnoser()]
 public class Comparison
 {
-    private const string PathSmall = @"F:\SteamLibrary\steamapps\common\X4 Foundations\extensions\crystal_rarities\subst_01.cat";
-    private const string PathBig = @"F:\SteamLibrary\steamapps\common\X4 Foundations\01.cat";
+    private const string PathSmall = @"E:\SteamLibrary\steamapps\common\X4 Foundations\extensions\crystal_rarities\subst_01.cat";
+    private const string PathBig = @"E:\SteamLibrary\steamapps\common\X4 Foundations\02.cat";
 
     private static readonly IFileSystem Fs = new FileSystem();
     private static readonly CatalogFileReader CatalogFileReader = new();
@@ -12,31 +12,25 @@ public class Comparison
     private static readonly CatalogFile CatalogFileLarge = CatalogFileReader.GetCatalogFile(PathBig);
 
     private CatalogFile _catalogFile;
-    
-    //[Params("Small_600KB", "Large_5GB")]
-    //public string FileSize { get; set; }
-    
-    //[GlobalSetup]
-    //public void GlobalSetup()
-    //{
-    //    _catalogFile = FileSize == "Large_5GB" ? CatalogFileLarge : CatalogFileSmall;
-    //}
 
-    public Comparison()
+    [Params("Small_600KB", "Large_5GB")]
+    public string FileSize { get; set; }
+
+    [GlobalSetup]
+    public void GlobalSetup()
     {
-        _catalogFile = CatalogFileSmall;
+        _catalogFile = FileSize == "Large_5GB" ? CatalogFileLarge : CatalogFileSmall;
     }
+
+    //public Comparison()
+    //{
+    //    _catalogFile = CatalogFileSmall;
+    //}
 
     [Benchmark]
     public void ExportAssetsUnoptimized_Benchmark()
     {
         ExportAssetsUnoptimized(_catalogFile, @"E:\temp\");
-    }
-
-    [Benchmark]
-    public async Task ExportAssetsUnoptimizedAsync_Benchmark()
-    {
-        await ExportAssetsUnoptimizedAsync(_catalogFile, @"E:\temp\");
     }
 
     [Benchmark]
@@ -46,15 +40,21 @@ public class Comparison
     }
 
     [Benchmark]
-    public async Task ExportAssetsWithArrayPoolAsync_Benchmark()
-    {
-        await ExportAssetsWithArrayPoolAsync(_catalogFile, @"E:\temp\");
-    }
-
-    [Benchmark]
     public void ExportAssetsSubStream_Benchmark()
     {
         ExportAssetsSubStream(_catalogFile, @"E:\temp\");
+    }
+
+    [Benchmark]
+    public async Task ExportAssetsUnoptimizedAsync_Benchmark()
+    {
+        await ExportAssetsUnoptimizedAsync(_catalogFile, @"E:\temp\");
+    }
+
+    [Benchmark]
+    public async Task ExportAssetsWithArrayPoolAsync_Benchmark()
+    {
+        await ExportAssetsWithArrayPoolAsync(_catalogFile, @"E:\temp\");
     }
 
     [Benchmark]
@@ -120,7 +120,6 @@ public class Comparison
 
             stream.Seek(catalogEntry.ByteOffset, SeekOrigin.Begin);
             byte[] newFileData = bufferPool.Rent(catalogEntry.AssetSize);
-            //Span<byte> newFileData = buffer.AsSpan().Slice(0, catalogEntry.AssetSize);
             int read = stream.Read(newFileData, 0, catalogEntry.AssetSize);
 
             if (read != catalogEntry.AssetSize)
